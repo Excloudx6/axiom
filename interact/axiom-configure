@@ -110,7 +110,7 @@ if [[ $BASEOS == "Linux" ]]; then
         # Would probably suffice with running 'go'...
         GOPATH_TEMP=$(eval which go)
         eval GOPATH_TEMP get -u github.com/sensepost/gowitness@2.3.6
-    elif [[ $OS == "Ubuntu" ]] || [[ $OS == "Debian" ]] || [[ $OS == "Linuxmint" ]] || [[ $OS == "Parrot" ]] || [[ $OS == "Kali" ]] || [[ $OS == "unknown-Linux" ]]; then
+    elif [[ $OS == "Ubuntu" ]] || [[ $OS == "Debian" ]] || [[ $OS == "Linuxmint" ]] || [[ $OS == "Parrot" ]] || [[ $OS == "Kali" ]] || [[ $OS == "unknown-Linux" ]] || [[ $OS == "UbuntuWSL" ]]; then
        if ! command -v sudo &> /dev/null; then
         export DEBIAN_FRONTEND=noninteractive
         apt-get update && apt-get install sudo curl jq tzdata -y -qq
@@ -144,19 +144,6 @@ if [[ $BASEOS == "Linux" ]]; then
         echo -e "${Blue}Installing gowitness...${Color_Off}"
         sudo wget -O /usr/bin/gowitness https://github.com/sensepost/gowitness/releases/download/2.3.6/gowitness-2.3.6-linux-amd64 && sudo chmod +x /usr/bin/gowitness 
 
-  elif [[ $OS == "UbuntuWSL" ]]; then
-        echo -e "${Blue}Installing other repo deps...${Color_Off}"
-        DEBIAN_FRONTEND=noninteractive sudo apt-get update && sudo apt-get install git ruby python3-pip curl net-tools unzip xsltproc bc rsync sudo nano wget bsdmainutils -y 
-        echo -e "${Blue}Installing jq...${Color_Off}"
-        sudo wget -q -O /usr/bin/jq https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64 && sudo chmod +x /usr/bin/jq
-        echo -e "${Blue}Installing packer...${Color_Off}"
-        wget -q -O /tmp/packer.zip https://releases.hashicorp.com/packer/1.5.6/packer_1.5.6_linux_amd64.zip && cd /tmp/ && unzip packer.zip && sudo mv packer /usr/bin/ && rm /tmp/packer.zip
-        echo -e "${Blue}Installing Interlace...${Color_Off}"
-        sudo rm -fr /tmp/interlace  
-        git clone https://github.com/codingo/Interlace.git /tmp/interlace 
-        cd /tmp/interlace && sudo python3 setup.py install 
-        echo -e "${Blue}Installing gowitness...${Color_Off}"
-        sudo wget -q -O /usr/bin/gowitness https://github.com/sensepost/gowitness/releases/download/2.3.6/gowitness-2.3.6-linux-amd64 && sudo chmod +x /usr/bin/gowitness 
 	fi
 fi
 

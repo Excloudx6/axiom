@@ -27,7 +27,7 @@ function formatSeconds (){
         ((minutes=timepassed/60))
         ((hours=minutes/60))
         ((minutes=minutes%60))
-        printf "$format" $hours $minutes $seconds
+        printf "$format" "$hours" "$minutes" "$seconds"
 }
 
 ###########################################################################################################
@@ -121,14 +121,14 @@ clean_up() {
     echo -e "${Green}CTRL+C Interrupt, cleaning up and downloading output..${Color_Off}."
     $interlace_cmd -c "$ssh_command _target_ '[ -f $scan_dir/_target_ ] && echo _target_ scan finished || echo _target_ scan was still running but downloading partial results'"
 	if [[ "$command" =~ "_target_" ]]; then
-        interlace --silent -threads $total -tL "$tmp/selected.conf" -c "$AXIOM_PATH/interact/axiom-scp _target_:/home/op/scan/$uid/output/ $tmp/output/ --cache -F=$sshconfig >> /dev/null"
+        interlace --silent -threads "$total" -tL "$tmp/selected.conf" -c "$AXIOM_PATH/interact/axiom-scp _target_:/home/op/scan/$uid/output/ $tmp/output/ --cache -F=$sshconfig >> /dev/null"
 	else
-		interlace --silent -tL $tmp/hosts -c "axiom-scp _target_:/home/op/scan/$uid/output $tmp/output/_target_.$ext --cache -F=$sshconfig  >/dev/null 2>&1"
+		interlace --silent -tL "$tmp"/hosts -c "axiom-scp _target_:/home/op/scan/$uid/output $tmp/output/_target_.$ext --cache -F=$sshconfig  >/dev/null 2>&1"
 	fi
     merge_output
     mv "$AXIOM_PATH/tmp/$uid/" "$AXIOM_PATH/logs/"
     echo -e "${Blue}Killing remote processes in a backgroud job${Color_Off}"
-    axiom-orgalorg -C "sudo lsof /home/op/scan/${uid}/  | tail -n +2 | tr -s ' ' | cut -d ' ' -f 2 | xargs sudo kill" -i "$(cat $AXIOM_PATH/logs/$uid/selected.conf | tr '\n' " " )" >/dev/null 2>&1 &
+    axiom-orgalorg -C "sudo lsof /home/op/scan/${uid}/  | tail -n +2 | tr -s ' ' | cut -d ' ' -f 2 | xargs sudo kill" -i "$(cat "$AXIOM_PATH"/logs/"$uid"/selected.conf | tr '\n' " " )" >/dev/null 2>&1 &
     if [[ "$keeplogs" != "true" ]]; then
      delete_logs
     fi 
@@ -137,11 +137,11 @@ clean_up() {
     time=$(formatSeconds $runtime)
     echo -e "${Blue}Module [ $module $args ] | Time: [ $time ] | Input: [ $lines targets ]${Color_Off}"
     echo -e "${BGreen}Output saved to '${Blue}$outfile${BGreen}'! Local logs saved to '${Blue}$AXIOM_PATH/logs/$uid${BGreen}'! ${BGreen}Remote logs saved to '${Blue}/home/op/scan/$uid${BGreen}'!"
-    echo "{\"module\":\"$module\",\"args\":\"$args\",\"targets\":\"$lines\",\"results\":\"$res\",\"seconds\":\"$runtime\",\"instances\":\"$total_instances\",\"command\":\"$command\",\"scanuid\":\"$uid\",\"time\":\"$time\",\"start-time\":\"$starttime\",\"status\":\"canceled\"}"  >> $AXIOM_PATH/stats.log
-    kill -9 $tailPID
+    echo "{\"module\":\"$module\",\"args\":\"$args\",\"targets\":\"$lines\",\"results\":\"$res\",\"seconds\":\"$runtime\",\"instances\":\"$total_instances\",\"command\":\"$command\",\"scanuid\":\"$uid\",\"time\":\"$time\",\"start-time\":\"$starttime\",\"status\":\"canceled\"}"  >> "$AXIOM_PATH"/stats.log
+    kill -9 "$tailPID"
     stty sane
     tput init
-    exit $1
+    exit "$1"
 }
 
 ###########################################################################################################
@@ -149,13 +149,13 @@ clean_up() {
 #  To avoid undesirable scan results after merging, we keep the original un-merged scan result as well as the final merged copy. Everything else pertaining to the scan deleted.
 delete_logs() {
  echo -e "${Blue}Deleting remote logs in a backgroud job${Color_Off}"
- axiom-orgalorg -C "sudo rm -r /home/op/scan/${uid}/" -i "$(cat $AXIOM_PATH/logs/$uid/selected.conf | tr '\n' " " )" >/dev/null 2>&1 &
+ axiom-orgalorg -C "sudo rm -r /home/op/scan/${uid}/" -i "$(cat "$AXIOM_PATH"/logs/"$uid"/selected.conf | tr '\n' " " )" >/dev/null 2>&1 &
   if [ -d "$AXIOM_PATH/logs/$uid/" ] 
    then
    echo -e "${Blue}Deleting local logs, except for $AXIOM_PATH/logs/$uid/output/ ${Color_Off}"
    start=$(pwd)
-   cd "$AXIOM_PATH/logs/$uid/" ; ls | grep -v output | xargs rm -r >/dev/null 2>&1
-   cd "$start"
+   cd "$AXIOM_PATH/logs/$uid/" || exit ; ls | grep -v output | xargs rm -r >/dev/null 2>&1
+   cd "$start" || exit
   else
     echo "Error: local log folder does not exist."
 fi
@@ -205,7 +205,7 @@ add_extra_args() {
     done
 
     IFS=$OLDIFS
-    echo $new_command
+    echo "$new_command"
 }
 
 ###########################################################################################################
@@ -220,8 +220,8 @@ tmp="$3"
 # if gee is NOT-installed, use bash
 if ! [ -x "$(command -v gee)" ]; then
     lines="$(wc -l "$file" | awk '{ print $1 }')"
-    lines_per_file=$(expr $lines / $divisor)
-    [[ $(expr $lines % $divisor) != 0 ]] && lines_per_file=$(expr $lines_per_file + 1)
+    lines_per_file=$(expr "$lines" / "$divisor")
+    [[ $(expr "$lines" % "$divisor") != 0 ]] && lines_per_file=$(expr "$lines_per_file" + 1)
  
 # randomize the target list. To disable randomization, use the --dont-shuffle option 
 if [[ "$shuffle" != "false" ]]; then
@@ -229,13 +229,13 @@ if [[ "$shuffle" != "false" ]]; then
 else
 cp "$file" "$tmp/split/targets"
 fi
-cd "$tmp/split" && split -l $lines_per_file targets && rm targets && cd "$start"
+cd "$tmp/split" && split -l "$lines_per_file" targets && rm targets && cd "$start" || exit
 
 # Rename "xaa" etc  to 1 2 3 4 5
 i=1
 for f in $(find "$tmp/split/" -type f | tr '/' ' ' | awk '{ print $NF }')
 do
-        instance="$(echo $instances | awk "{ print \$$i }")"
+        instance="$(echo "$instances" | awk "{ print \$$i }")"
         i=$((i+1))
 
         mv "$tmp/split/$f" "$tmp/input/$instance"
@@ -246,14 +246,14 @@ else
 
 # if gee is installed make sure its up to date, use gee to split the file. 
 GO111MODULE=on go get -v github.com/hahwul/gee >/dev/null 2>&1
-escapedtmp=$(echo $tmp | sed 's;/;\\/;g')
+escapedtmp=$(echo "$tmp" | sed 's;/;\\/;g')
 # randomize the target list. To disable randomization, use the --dont-shuffle option.
 if [[ "$shuffle" != "false" ]]; then
-    shuf "$file" | gee -distribute $(cat $tmp/selected.conf | sed -e 's/^/'$escapedtmp'\/input\//' | tr '\n' ' ') &>/dev/null 
+    shuf "$file" | gee -distribute $(cat "$tmp"/selected.conf | sed -e 's/^/'"$escapedtmp"'\/input\//' | tr '\n' ' ') &>/dev/null 
 else
-    cat "$file" | gee -distribute $(cat $tmp/selected.conf | sed -e 's/^/'$escapedtmp'\/input\//' | tr '\n' ' ') &>/dev/null 
+    cat "$file" | gee -distribute $(cat "$tmp"/selected.conf | sed -e 's/^/'"$escapedtmp"'\/input\//' | tr '\n' ' ') &>/dev/null 
 fi
-    total=$(ls $tmp/input | wc -l)
+    total=$(ls "$tmp"/input | wc -l)
 fi
 }
 
@@ -269,7 +269,7 @@ merge_output() {
     if [[ "$ext" == "txt" ]]; then
         echo "Mode set to txt.. Sorting unique."
         touch "$tmp/output/place"
-        find $tmp/output/ -type f -exec cat {} \; | sort -u > $tmp/merge
+        find "$tmp"/output/ -type f -exec cat {} \; | sort -u > "$tmp"/merge
         if [[ "$anew" == "true" ]]; then
             cat "$tmp/merge" | anew "$outfile"
         else
@@ -284,33 +284,33 @@ merge_output() {
     elif [[ "$ext" == "csv" ]]; then
         echo "Mode set to CSV, merging..."
         touch "$tmp/output/place"
-        header="$(find $tmp/output/ -type f -exec head -n 1 {} \; | sort -u )"
+        header="$(find "$tmp"/output/ -type f -exec head -n 1 {} \; | sort -u )"
         echo "$header" > "$outfile"
-        find $tmp/output/ -type f -exec cat {} \; | grep -v "$header" | sort -u -V >> "$outfile"
+        find "$tmp"/output/ -type f -exec cat {} \; | grep -v "$header" | sort -u -V >> "$outfile"
     elif [[ "$ext" == "" ]] || [[ "$ext" == "dir" ]];  then
             echo "Mode set to directory... Merging directories..."
-            mkdir $tmp/merge
-            find $tmp/output -type f -print0 | xargs -0 -I{} cp --backup=t {} $tmp/merge
+            mkdir "$tmp"/merge
+            find "$tmp"/output -type f -print0 | xargs -0 -I{} cp --backup=t {} "$tmp"/merge
             if [ -f "$outfile" ] ; then
              rm -rf "$outfile"
             fi
-            mv $tmp/merge "$outfile"
+            mv "$tmp"/merge "$outfile"
         if [[ "$module" == "gowitness" ]]; then
             echo "Downloading gowitness databases..."
             mkdir -p "$tmp/dbs/"
             $interlace_cmd -c "axiom-scp _target_:$scan_dir/gowitness.sqlite3 $tmp/dbs/_target_.sqlite3 --cache -F=$sshconfig>> /dev/null"
             echo "Merging databases..."
-            gowitness merge --input-path $tmp/ -o gowitness.sqlite3
+            gowitness merge --input-path "$tmp"/ -o gowitness.sqlite3
             echo -e "${Green}RUN: '${Blue}gowitness -D gowitness.sqlite3 -P screenshots report serve${Color_Off}' for reporting"
         fi
            if [[ "$module" == "naabu-nmap" ]]; then
             echo "Merging naabu and nmap output"
-            find . -name "*.txt" | xargs cat | sort -u > $outfile/final_naabu.txt
+            find . -name "*.txt" | xargs cat | sort -u > "$outfile"/final_naabu.txt
             echo "Merging Nmap XML output..."
             "$AXIOM_PATH/interact/merge-xml.py" -d "$outfile" -o "$outfile/final_nmap.xml" >> /dev/null
            if [ -f "$outfile" ] ; then
-            rm -rf $outfile/naabu*
-            rm -rf $outfile/nmap*
+            rm -rf "$outfile"/naabu*
+            rm -rf "$outfile"/nmap*
            fi
 
             echo -e "${Green}Done: '${Blue}Merging both naabu ouput and nmap${Color_Off}'"
@@ -515,13 +515,21 @@ if [[ ! -f $input ]]; then
 fi
 
 # Check if -m is in the command, if not, exit
-# TODO: Add check that module exists, if not, exit
 #
 if [[ "$*" != *-m* ]]
 then
   echo -e "\033[0;31m No module for axiom-scan defined. Pass one with -m."
 	help
 	exit 1
+fi
+
+# Exit if module doesnt exist
+#
+if [ ! -f "$AXIOM_PATH"/modules/"$module".json ]; then
+ echo -e "\033[0;31mERROR: Axiom module not found."
+ echo -e "Ensure module exists in $AXIOM_PATH/modules/$module.json"
+ echo -e "To print all available modules run axiom-scan --list"
+ exit 1
 fi
 
 # Create temporary directories and set tmp path to be used for logs
@@ -651,16 +659,16 @@ fi
 if [[ -f "$local_wordlist" ]]; then
 if [[ "$distribute_wordlist" == "false" ]]; then
     echo -e "${Green}Uploading local wordlist: $local_wordlist_filename to $destination_wordlist...${Color_Off}"
-    interlace --silent -threads $total -tL "$tmp/selected.conf" -c "$AXIOM_PATH/interact/axiom-scp $local_wordlist  _target_:$destination_wordlist --cache -F=$sshconfig >> /dev/null"
+    interlace --silent -threads "$total" -tL "$tmp/selected.conf" -c "$AXIOM_PATH/interact/axiom-scp $local_wordlist  _target_:$destination_wordlist --cache -F=$sshconfig >> /dev/null"
     echo -e "${Green}Wordlist uploaded successfully!${Color_Off}"
 else
     echo -e "${Green}Splitting and uploading local wordlist: $local_wordlist_filename to $destination_wordlist...${Color_Off}"
-    mkdir -p $tmp/distribute_wordlist/split
-    mkdir -p $tmp/distribute_wordlist/input
+    mkdir -p "$tmp"/distribute_wordlist/split
+    mkdir -p "$tmp"/distribute_wordlist/input
     cp "$tmp/selected.conf" "$tmp/distribute_wordlist/selected.conf"
     # hack to stop overwriting $lines and $tmp
     lines1=$lines && tmp1=$tmp
-    split_file "$local_wordlist" "$total_instances" $tmp/distribute_wordlist
+    split_file "$local_wordlist" "$total_instances" "$tmp"/distribute_wordlist
     # hack to stop overwriting $lines and $tmp
     lines=$lines1 && tmp=$tmp1
     $interlace_cmd -c "$AXIOM_PATH/interact/axiom-scp $tmp/distribute_wordlist/input/_target_ _target_:$destination_wordlist --cache -F=$sshconfig >/dev/null 2>&1" | grep -v "Gen"
@@ -704,7 +712,7 @@ fi
 
 # Display some stats prior to scanning
 #
-echo -e "${BWhite}Module:${Color_Off} [ ${Blue}$module $args${Color_Off} ] | ${BWhite}Input:${Color_Off} [ ${Blue}$lines targets${Color_Off} ] | ${BWhite}Instances:${Color_Off} $total_instances [${Blue} $(echo $instances | tr '\n' ' ')${Color_Off}]"
+echo -e "${BWhite}Module:${Color_Off} [ ${Blue}$module $args${Color_Off} ] | ${BWhite}Input:${Color_Off} [ ${Blue}$lines targets${Color_Off} ] | ${BWhite}Instances:${Color_Off} $total_instances [${Blue} $(echo "$instances" | tr '\n' ' ')${Color_Off}]"
 echo -e "${BWhite}Command:${Color_Off} [ ${Blue}$command${Color_Off} ] | $thread_str${BWhite}Ext${Color_Off}: [${Blue}$ext${Color_Off}]"
 
 ###########################################################################################################
@@ -730,7 +738,7 @@ echo -n -e "[ ${Green}OK${Color_Off} ]\n"
 if [[ "$split" == "true" ]]; then
     split_file "$input_file" "$total_instances" "$tmp"
     else
-    for i in $(echo $instances); do cp "$input_file" $tmp/input/$i ; done 
+    for i in $(echo "$instances"); do cp "$input_file" "$tmp"/input/"$i" ; done 
 fi
 
 # use axiom-scp to upload each input file to a remote instance
@@ -741,7 +749,7 @@ $interlace_cmd -c "$AXIOM_PATH/interact/axiom-scp $tmp/input/_target_ _target_:$
 # Dont tail if interactive is false
 #
 if [[ "$interactive" != "true" ]]; then
-    tail -q -f $tmp/logs/* &
+    tail -q -f "$tmp"/logs/* &
     tailPID=$!
 fi
 
@@ -806,7 +814,7 @@ fi
 #
 echo -e "${Blue}Module [ $module $args ] | Time: [ $time ] | Input: [ $lines targets ]${Color_Off}"
 echo -e "${BGreen}Output saved to '${Blue}$outfile${BGreen}'! Local logs saved to '${Blue}$AXIOM_PATH/logs/$uid${BGreen}'! ${BGreen}Remote logs saved to '${Blue}/home/op/scan/$uid${BGreen}'!"
-echo "{\"module\":\"$module\",\"args\":\"$args\",\"targets\":\"$lines\",\"results\":\"$res\",\"seconds\":\"$runtime\",\"instances\":\"$total_instances\",\"command\":\"$command\",\"scanuid\":\"$uid\",\"time\":\"$time\",\"start-time\":\"$starttime\",\"status\":\"completed\"}"  >> $AXIOM_PATH/stats.log
+echo "{\"module\":\"$module\",\"args\":\"$args\",\"targets\":\"$lines\",\"results\":\"$res\",\"seconds\":\"$runtime\",\"instances\":\"$total_instances\",\"command\":\"$command\",\"scanuid\":\"$uid\",\"time\":\"$time\",\"start-time\":\"$starttime\",\"status\":\"completed\"}"  >> "$AXIOM_PATH"/stats.log
 kill -9 $tailPID
 wait $tailPID 2>/dev/null
 stty sane

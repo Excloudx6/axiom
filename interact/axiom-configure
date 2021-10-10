@@ -108,9 +108,9 @@ if [[ $BASEOS == "Linux" ]]; then
         # a temporary variable will be used.
         #
         # Would probably suffice with running 'go'...
-        GOPATH_TEMP=$(eval which go)
-        eval GOPATH_TEMP get -u github.com/sensepost/gowitness@2.3.6
-    elif [[ $OS == "Ubuntu" ]] || [[ $OS == "Debian" ]] || [[ $OS == "Linuxmint" ]] || [[ $OS == "Parrot" ]] || [[ $OS == "Kali" ]] || [[ $OS == "unknown-Linux" ]] || [[ $OS == "UbuntuWSL" ]]; then
+        eval GOPATH_TEMP get install github.com/sensepost/gowitness@latest
+
+elif [[ $OS == "Ubuntu" ]] || [[ $OS == "Debian" ]] || [[ $OS == "Linuxmint" ]] || [[ $OS == "Parrot" ]] || [[ $OS == "Kali" ]] || [[ $OS == "unknown-Linux" ]] || [[ $OS == "UbuntuWSL" ]]; then
        if ! command -v sudo &> /dev/null; then
         export DEBIAN_FRONTEND=noninteractive
         apt-get update && apt-get install sudo curl jq tzdata -y -qq
@@ -129,8 +129,6 @@ if [[ $BASEOS == "Linux" ]]; then
         sudo rm -fr /tmp/interlace 
         git clone https://github.com/codingo/Interlace.git /tmp/interlace  
         cd /tmp/interlace && sudo python3 setup.py install 
-        echo -e "${Blue}Installing gowitness...${Color_Off}"
-        sudo wget -q -O /usr/bin/gowitness https://github.com/sensepost/gowitness/releases/download/2.3.6/gowitness-2.3.6-linux-amd64 && sudo chmod +x /usr/bin/gowitness 
 
 	elif [[ $OS == "Fedora" ]]; then
       	echo -e "${Blue}Installing other repo deps...${Color_Off}"
@@ -141,8 +139,6 @@ if [[ $BASEOS == "Linux" ]]; then
 		    wget -O /tmp/packer.zip https://releases.hashicorp.com/packer/1.5.6/packer_1.5.6_linux_amd64.zip && cd /tmp/ && unzip packer.zip && sudo mv packer /usr/bin/ && rm /tmp/packer.zip
 		    echo -e "${Blue}Installing doctl...${Color_Off}"
 		    wget -O /tmp/doctl.tar.gz https://github.com/digitalocean/doctl/releases/download/v1.45.0/doctl-1.45.0-linux-amd64.tar.gz && tar -xvzf /tmp/doctl.tar.gz && sudo mv doctl /usr/bin/doctl && rm /tmp/doctl.tar.gz
-        echo -e "${Blue}Installing gowitness...${Color_Off}"
-        sudo wget -O /usr/bin/gowitness https://github.com/sensepost/gowitness/releases/download/2.3.6/gowitness-2.3.6-linux-amd64 && sudo chmod +x /usr/bin/gowitness 
 
 	fi
 fi
@@ -175,8 +171,6 @@ if [[ $BASEOS == "Mac" ]]; then
          sudo rm -fr /tmp/interlace  
          git clone https://github.com/codingo/Interlace.git /tmp/interlace  
          cd /tmp/interlace && sudo python3 setup.py install 
-         echo -e "${Blue}Installing gowitness...${Color_Off}"
-         wget -q -O /usr/local/bin/gowitness https://github.com/sensepost/gowitness/releases/download/2.3.6/gowitness-2.3.6-darwin-amd64
          echo -e "${Blue}Installing packer...${Color_Off}"
          brew tap hashicorp/tap
          brew install hashicorp/tap/packer
@@ -255,10 +249,12 @@ done
 fi
 fi
 
-#install gee
+#install go tools
 
-echo "Updating gee https://github.com/hahwul/gee"
+echo "Installing gee https://github.com/hahwul/gee"
 GO111MODULE=on go install github.com/hahwul/gee@latest
+echo "Installing gowitness https://github.com/hahwul/gee"
+go install github.com/sensepost/gowitness@latest
 
 if [ ! -d $AXIOM_PATH ]; then
     echo -e "${Blue}Installing axiom scripts...${Color_Off}"
